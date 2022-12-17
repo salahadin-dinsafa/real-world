@@ -20,6 +20,18 @@ export class AuthService {
         private readonly jwtService: JwtService
     ) { }
 
+
+
+    async getUserByUsernameWithRelation(username: string): Promise<UserEntity> {
+        let user: UserEntity;
+        try {
+            user = await this.userRepository.findOne({ where: { username }, relations: ['follower'] });
+        } catch (error) {
+            throw new UnprocessableEntityException(`${error.message}`)
+        }
+        if (!user) throw new UnauthorizedException(`User with #username: ${username} not found`)
+        return user;
+    }
     async getUserByUsername(username: string): Promise<UserEntity> {
         let user: UserEntity;
         try {

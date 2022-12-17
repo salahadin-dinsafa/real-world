@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm/repository/Repository';
@@ -15,34 +15,74 @@ export class ProfilesService {
         private readonly userRepository: Repository<UserEntity>
     ) { }
 
-    async getProfileByUsername(username: string): Promise<Profile> {
-        let user: UserEntity = await this.authService.getUserByUsername(username);
-        return this.getProfile(user);
+    async getProfileByUsername(currentUsername: string, username: string): Promise<Profile> {
+        let user: UserEntity = await this.authService.getUserByUsernameWithRelation(username);
+        return this.getProfile(currentUsername, user);
     }
 
-    async followUserByUsername(username: string) {
-        let user: UserEntity;
+    async followUserByUsername(currentUsername: string, username: string): Promise<Profile> {
+        if (currentUsername === username)
+            throw new UnprocessableEntityException('Can\'t follow your self');
+        let currentUser: UserEntity;
+        let user: UserEntity =
+            await this.authService.getUserByUsernameWithRelation(username);
         try {
-            user = await this.userRepository.findOne({ where: { username }, relations: ["follow"] })
-
+            currentUser =
+                await this.userRepository.findOne({ where: { username: currentUsername }, relations: ['following'] });
 
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
         }
 
-        if (!user) throw new UnauthorizedException(`User not authorized`)
+        if (!user) throw new NotFoundException(`User with #username: ${username} not found`);
+        currentUser.following = [...currentUser.following, user];
+        user.follower = [...user.follower, currentUser];
+        await this.userRepository.save(currentUser);
+        return this.getProfile(currentUsername, await this.userRepository.save(user));
+    }
+    async unFollowUserByUsername(currentUsername: string, username: string): Promise<Profile> {
+        if (currentUsername === username)
+            throw new UnprocessableEntityException('Can\'t unfollow your self');
+        let currentUser: UserEntity;
+        let user: UserEntity =
+            await this.authService.getUserByUsernameWithRelation(username);
+        try {
+            currentUser =
+                await this.userRepository.findOne({ where: { username: currentUsername }, relations: ['following'] });
+
+        } catch (error) {
+            throw new UnprocessableEntityException(`${error.message}`)
+        }
+
+        if (!user) throw new NotFoundException(`User with #username: ${username} not found`);
+        currentUser.following =
+            currentUser.following.filter(followingUser => followingUser.username !== user.username);
+        user.follower =
+            user.follower.filter(followerUser => followerUser.username !== currentUsername);
+
+        await this.userRepository.save(currentUser);
+        return this.getProfile(currentUsername, await this.userRepository.save(user));
     }
 
-    private getProfile(user: UserEntity): Profile {
+    private getProfile(currentUsername: string, user: UserEntity): Profile {
+        let following: boolean;
         try {
-            // todo: implement following;
-            const profile: Profile = {
-                username: user.username,
-                bio: user.bio,
-                image: user.image,
-                following: false
+            if (user.follower) {
+                user.follower.find(user => user.username === currentUsername) ?
+                    following = true :
+                    following = false;
+                delete user.following;
             }
-            return profile;
+            delete user.id;
+            delete user.password;
+            delete user.email;
+            user.follower ? delete user.follower : null;
+            return {
+                profile: {
+                    ...user,
+                    following
+                }
+            };
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`);
         }

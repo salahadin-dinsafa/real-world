@@ -34,7 +34,7 @@ export class UserEntity extends BaseEntity {
     following: UserEntity[];
 
     @ManyToMany(() => UserEntity)
-    @JoinTable({ name: 'user_followedBy_user' })
+    @JoinTable({ name: 'user_followedby_user' })
     follower: UserEntity[];
 
     @OneToMany(() => ArticleEntity, articleEntity => articleEntity.author, { cascade: true })
