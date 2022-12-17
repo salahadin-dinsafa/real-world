@@ -7,27 +7,27 @@ import { GetUser } from './decorators/get-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserEntity } from './entities/user.entity';
-import { AccessToken } from './types/access-token.type';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './types/user.type';
 
 @Controller()
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @Post('/users/login')
-    login(@Body() loginDto: LoginDto): Promise<AccessToken> {
+    login(@Body() loginDto: LoginDto): Promise<User> {
         return this.authService.login(loginDto);
     }
 
     @Post('/users')
-    createUser(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
+    createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
         return this.authService.createUser(createUserDto);
     }
 
     @UseGuards(AuthGuard())
     @Get('/user')
-    getCurrentUser(@GetUser() user: UserEntity): UserEntity {
-        return user;
+    getCurrentUser(@GetUser() user: UserEntity): Promise<User> {
+        return this.authService.getCurrentUser(user);
     }
 
     @UseGuards(AuthGuard())
@@ -35,7 +35,7 @@ export class AuthController {
     updateCurrentUser(
         @GetUser() user: UserEntity,
         @Body() updateUserDto: UpdateUserDto
-    ): Promise<UserEntity> {
+    ): Promise<User> {
         return this.authService.updateCurrentUser(user, updateUserDto);
     }
 

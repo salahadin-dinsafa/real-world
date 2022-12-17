@@ -9,8 +9,8 @@ import { UserEntity } from './entities/user.entity';
 import { CreateUserType } from './types/create-user.type';
 import { LoginType } from './types/login.type';
 import { Payload } from './types/payload.type';
-import { AccessToken } from './types/access-token.type';
 import { UpdateUserType } from './types/update-user.type';
+import { User } from './types/user.type';
 
 @Injectable()
 export class AuthService {
@@ -30,52 +30,64 @@ export class AuthService {
         if (!user) throw new UnauthorizedException(`User with #username: ${username} not found`)
         return user;
     }
-    async createUser(createUser: CreateUserType): Promise<UserEntity> {
+    async createUser(createUser: CreateUserType): Promise<User> {
+        const { user } = createUser;
         try {
-            const user = this.userRepository.create({
-                ...createUser,
-                password: await hash(createUser.password, 15)
+            const newUser = this.userRepository.create({
+                ...user,
+                password: await hash(user.password, 15)
             })
-            return await this.userRepository.save(user);
+            return this.getCurrentUser(await this.userRepository.save(newUser))
         } catch (error) {
+            if (error.code === '23505')
+                throw new UnprocessableEntityException(`user with #username: ${user.username} already exists`)
             throw new UnprocessableEntityException(`${error.message}`)
+
         }
     }
 
-    async login(login: LoginType): Promise<AccessToken> {
+    async login(login: LoginType): Promise<User> {
         let user: UserEntity;
         try {
-            user = await this.userRepository.findOne({ where: { email: login.email } });
+            user = await this.userRepository.findOne({ where: { email: login.user.email } });
         }
         catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
         }
         if (!user) throw new UnauthorizedException('User not authorized');
-        const isValidPassword: boolean = await compare(login.password, user.password);
+        const isValidPassword: boolean = await compare(login.user.password, user.password);
         if (!isValidPassword) throw new UnauthorizedException('User not authorized');
 
+        return this.getCurrentUser(user);
+
+    }
+
+    async getCurrentUser(user: UserEntity): Promise<User> {
         const payload: Payload = { username: user.username };
-        let accessToken: AccessToken;
         try {
-            accessToken = {
-                accessToken: this.jwtService.sign(payload, { secret: process.env.JWT_SECRET })
+            const token: string =
+                this.jwtService.sign(payload, { secret: process.env.JWT_SECRET })
+            delete user.password;
+            delete user.id;
+            return {
+                user: {
+                    ...user, token
+                }
             };
 
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
         }
-        return accessToken;
-
     }
 
-    async updateCurrentUser(user: UserEntity, updateUser: UpdateUserType): Promise<UserEntity> {
-        const { password } = updateUser;
+    async updateCurrentUser(currentUser: UserEntity, updateUser: UpdateUserType): Promise<User> {
+        const { user } = updateUser;
         try {
-            password ?
-                Object.assign(user, { ...updateUser, password: await hash(password, 15) }) :
-                Object.assign(user, { ...updateUser });
+            user.password ?
+                Object.assign(currentUser, { ...user, password: await hash(user.password, 15) }) :
+                Object.assign(currentUser, { ...user });
 
-            return await this.userRepository.save(user);
+            return this.getCurrentUser(await this.userRepository.save(currentUser));
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
 

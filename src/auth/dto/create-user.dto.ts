@@ -1,13 +1,19 @@
+import { Type } from "class-transformer";
 import {
     IsEmail,
     IsNotEmpty,
     IsString,
     MinLength,
     Matches,
-    IsOptional
+    IsOptional,
+    ValidateNested,
+    IsObject
 } from "class-validator";
 
-export class CreateUserDto {
+
+
+
+export class CreateUserElementDto {
     @IsNotEmpty()
     @IsString()
     username: string;
@@ -29,4 +35,12 @@ export class CreateUserDto {
     @IsOptional()
     @IsString()
     image: string;
+}
+
+export class CreateUserDto {
+    @IsNotEmpty()
+    @ValidateNested()
+    @Type(() => CreateUserElementDto)
+    @IsObject()
+    user: CreateUserElementDto;
 }
