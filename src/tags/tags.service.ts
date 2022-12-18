@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 
 import { TagEntity } from './entities/tag.entity';
 import { CreateTagType } from './types/tag.type';
+import { Tags } from './types/tags.type';
 
 @Injectable()
 export class TagsService {
@@ -13,10 +14,11 @@ export class TagsService {
         private readonly tagRepository: Repository<TagEntity>
     ) { }
 
-    async getTags(): Promise<string[]> {
+    async getTags(): Promise<Tags> {
         try {
-            return await this.tagRepository.find()
+            const tags: string[] = await this.tagRepository.find()
                 .then(tags => tags.map(tag => tag.name));
+            return { tags }
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
         }

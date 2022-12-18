@@ -22,10 +22,20 @@ export class AuthService {
 
 
 
-    async getUserByUsernameWithRelation(username: string): Promise<UserEntity> {
+    async getUserByUsernameWithRelationFollower(username: string): Promise<UserEntity> {
         let user: UserEntity;
         try {
             user = await this.userRepository.findOne({ where: { username }, relations: ['follower'] });
+        } catch (error) {
+            throw new UnprocessableEntityException(`${error.message}`)
+        }
+        if (!user) throw new UnauthorizedException(`User with #username: ${username} not found`)
+        return user;
+    }
+    async getUserByUsernameWithRelationFollowing(username: string): Promise<UserEntity> {
+        let user: UserEntity;
+        try {
+            user = await this.userRepository.findOne({ where: { username }, relations: ['following'] });
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)
         }

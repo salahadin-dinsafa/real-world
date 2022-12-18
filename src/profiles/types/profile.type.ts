@@ -2,7 +2,7 @@ export interface Profile {
     profile: ProfileElement
 }
 
-interface ProfileElement {
+export interface ProfileElement {
     bio: string;
     following: boolean;
     image: string;

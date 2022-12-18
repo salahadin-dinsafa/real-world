@@ -2,7 +2,6 @@ import { Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { UserEntity } from '../auth/entities/user.entity';
 import { ProfilesService } from './profiles.service';
 import { Profile } from './types/profile.type';
 
@@ -10,7 +9,6 @@ import { Profile } from './types/profile.type';
 export class ProfilesController {
     constructor(private readonly profilesService: ProfilesService) { }
 
-    @UseGuards(AuthGuard())
     @Get(':username')
     getProfileByUsername(
         @GetUser('username') currentUsername: string,
@@ -26,6 +24,7 @@ export class ProfilesController {
     ): Promise<Profile> {
         return this.profilesService.followUserByUsername(currentUsername, username);
     }
+
     @UseGuards(AuthGuard())
     @Delete(':username/follow')
     unFollowUserByUsername(

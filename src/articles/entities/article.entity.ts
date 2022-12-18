@@ -1,5 +1,6 @@
 import { UserEntity } from "../../auth/entities/user.entity";
-import { BaseEntity, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, BeforeUpdate, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { CommentEntity } from "./comment.entity";
 
 @Entity({ name: 'articles' })
 export class ArticleEntity extends BaseEntity {
@@ -12,10 +13,10 @@ export class ArticleEntity extends BaseEntity {
     @Column()
     title: string;
 
-    @Column({ default: '' })
+    @Column()
     description: string;
 
-    @Column({ default: '' })
+    @Column()
     body: string;
 
     @Column('simple-array', { default: [] })
@@ -36,6 +37,12 @@ export class ArticleEntity extends BaseEntity {
     @ManyToOne(() => UserEntity, userEntity => userEntity.articles, { eager: true })
     @JoinColumn()
     author: UserEntity;
+
+    @ManyToMany(() => UserEntity, userEntity => userEntity.likes)
+    users: UserEntity[];
+
+    @OneToMany(() => CommentEntity, commentEntity => commentEntity.article, { cascade: true })
+    comments: CommentEntity[]
 
     @BeforeUpdate()
     updateTime() {

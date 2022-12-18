@@ -1,4 +1,3 @@
-import { ArticleEntity } from "../../articles/entities/article.entity";
 import {
     BaseEntity,
     Column, Entity,
@@ -7,6 +6,9 @@ import {
     OneToMany,
     PrimaryGeneratedColumn
 } from "typeorm";
+
+import { ArticleEntity } from "../../articles/entities/article.entity";
+import { CommentEntity } from "../../articles/entities/comment.entity";
 
 @Entity({ name: "users" })
 export class UserEntity extends BaseEntity {
@@ -39,4 +41,11 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => ArticleEntity, articleEntity => articleEntity.author, { cascade: true })
     articles: ArticleEntity[];
+
+    @ManyToMany(() => ArticleEntity, articleEntity => articleEntity.users)
+    @JoinTable({ name: 'user_likes_article' })
+    likes: ArticleEntity[];
+
+    @OneToMany(() => CommentEntity, commentEntity => commentEntity.author)
+    comments: CommentEntity[]
 }

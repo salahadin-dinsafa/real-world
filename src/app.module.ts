@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common/decorators/modules/module.decorator';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
@@ -12,6 +12,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { ArticlesModule } from './articles/articles.module';
 import { TagsModule } from './tags/tags.module';
 import { ormConfig } from './common/db/ormconfig.datasource';
+import { OptionalJwtAuthGuard } from './common/guard/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -34,7 +35,6 @@ import { ormConfig } from './common/db/ormconfig.datasource';
     ProfilesModule,
     ArticlesModule,
     TagsModule],
-  controllers: [],
   providers: [
     {
       provide: APP_PIPE,
@@ -44,6 +44,10 @@ import { ormConfig } from './common/db/ormconfig.datasource';
         transform: true,
         transformOptions: { enableImplicitConversion: true }
       })
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OptionalJwtAuthGuard
     }
   ]
 })

@@ -16,58 +16,52 @@ export class ProfilesService {
     ) { }
 
     async getProfileByUsername(currentUsername: string, username: string): Promise<Profile> {
-        let user: UserEntity = await this.authService.getUserByUsernameWithRelation(username);
-        return this.getProfile(currentUsername, user);
+        let user: UserEntity = await this.authService.getUserByUsernameWithRelationFollower(username);
+        return await this.getProfile(currentUsername, user);
     }
 
     async followUserByUsername(currentUsername: string, username: string): Promise<Profile> {
         if (currentUsername === username)
             throw new UnprocessableEntityException('Can\'t follow your self');
-        let currentUser: UserEntity;
+        let currentUser: UserEntity =
+            await this.authService.getUserByUsernameWithRelationFollowing(currentUsername)
         let user: UserEntity =
-            await this.authService.getUserByUsernameWithRelation(username);
-        try {
-            currentUser =
-                await this.userRepository.findOne({ where: { username: currentUsername }, relations: ['following'] });
+            await this.authService.getUserByUsernameWithRelationFollower(username);
 
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-
-        if (!user) throw new NotFoundException(`User with #username: ${username} not found`);
         currentUser.following = [...currentUser.following, user];
         user.follower = [...user.follower, currentUser];
         await this.userRepository.save(currentUser);
-        return this.getProfile(currentUsername, await this.userRepository.save(user));
+        return await this.getProfile(currentUsername, await this.userRepository.save(user));
     }
     async unFollowUserByUsername(currentUsername: string, username: string): Promise<Profile> {
         if (currentUsername === username)
             throw new UnprocessableEntityException('Can\'t unfollow your self');
-        let currentUser: UserEntity;
+        let currentUser: UserEntity =
+            await this.authService.getUserByUsernameWithRelationFollowing(currentUsername);
         let user: UserEntity =
-            await this.authService.getUserByUsernameWithRelation(username);
-        try {
-            currentUser =
-                await this.userRepository.findOne({ where: { username: currentUsername }, relations: ['following'] });
+            await this.authService.getUserByUsernameWithRelationFollower(username);
 
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-
-        if (!user) throw new NotFoundException(`User with #username: ${username} not found`);
         currentUser.following =
             currentUser.following.filter(followingUser => followingUser.username !== user.username);
         user.follower =
             user.follower.filter(followerUser => followerUser.username !== currentUsername);
 
         await this.userRepository.save(currentUser);
-        return this.getProfile(currentUsername, await this.userRepository.save(user));
+        return await this.getProfile(currentUsername, await this.userRepository.save(user));
     }
 
-    private getProfile(currentUsername: string, user: UserEntity): Profile {
-        let following: boolean;
+    async getProfile(currentUsername: string, user: UserEntity): Promise<Profile> {
+        let following: boolean = false;
+
         try {
             if (user.follower) {
+                user.follower.find(user => user.username === currentUsername) ?
+                    following = true :
+                    following = false;
+                delete user.following;
+            } else {
+                user =
+                    await this.authService.getUserByUsernameWithRelationFollower(user.username);
                 user.follower.find(user => user.username === currentUsername) ?
                     following = true :
                     following = false;

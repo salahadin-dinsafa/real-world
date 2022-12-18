@@ -1,19 +1,30 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 
-export class CreateArticleDto {
+export class CreateArticleElementDto {
     @IsNotEmpty()
     @IsString()
     title: string;
 
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
-    body?: string;
+    body: string;
 
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
-    description?: string;
+    description: string;
 
     @IsOptional()
     @IsString({ each: true })
     tagList?: string[];
+}
+
+export class CreateArticleDto {
+
+    @IsNotEmpty()
+    @IsObject()
+    @ValidateNested()
+    @Type(() => CreateArticleElementDto)
+    article: CreateArticleElementDto
+
 }
