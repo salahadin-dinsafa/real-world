@@ -29,6 +29,19 @@ export class SeedDb1669313965703 implements MigrationInterface {
             `INSERT INTO user_followedby_user ("usersId_1", "usersId_2") VALUES
             ('2', '3')`
         );
+        await queryRunner.query(
+            `INSERT INTO comments (body, "authorId", "articleId") VALUES
+            ('amazing job', '1', '1'),
+            ('why is it job', '1', '1'),
+            ('yes offcourse', '2', '2'),
+            ('madrid', '2', '2')`
+        );
+        await queryRunner.query(
+            `INSERT INTO user_likes_article ("usersId", "articlesId") VALUES
+            ('1', '1'),
+            ('1', '2'),
+            ('2', '1')`
+        );
     }
 
     public async down(): Promise<void> { }
