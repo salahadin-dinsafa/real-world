@@ -43,7 +43,6 @@ import { OptionalJwtAuthGuard } from './common/guard/jwt-auth.guard';
         forbidNonWhitelisted: true,
         transform: true,
         transformOptions: { enableImplicitConversion: true }
-
       })
     },
     {

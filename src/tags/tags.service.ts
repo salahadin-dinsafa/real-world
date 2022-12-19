@@ -16,8 +16,9 @@ export class TagsService {
 
     async getTags(): Promise<Tags> {
         try {
-            const tags: string[] = await this.tagRepository.find()
-                .then(tags => tags.map(tag => tag.name));
+            const tags: string[] =
+                (await this.tagRepository.find())
+                    .map(tag => tag.name)
             return { tags }
         } catch (error) {
             throw new UnprocessableEntityException(`${error.message}`)

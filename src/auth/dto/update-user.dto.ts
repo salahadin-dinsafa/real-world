@@ -1,4 +1,4 @@
-import { PartialType } from "@nestjs/mapped-types";
+import { PartialType } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 

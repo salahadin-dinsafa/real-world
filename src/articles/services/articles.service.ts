@@ -7,28 +7,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import slugify from 'slugify';
 
-import { AuthService } from '../auth/auth.service';
-import { ProfilesService } from '../profiles/profiles.service';
-import { ArticleEntity } from './entities/article.entity';
-import { UserEntity } from '../auth/entities/user.entity';
-import { CommentEntity } from './entities/comment.entity';
-import { Articles } from './articles.type';
-import { CreateArticleType } from './types/create-article.type';
-import { UpdateArticleType } from './types/update-article.type';
-import { Article, ArticleElement } from './types/article.type';
-import { CreateCommentType } from './types/create-comment.type';
-import { Comment, CommentElement } from "./types/comment.type";
-import { ProfileElement } from '../profiles/types/profile.type';
-import { Comments } from './types/comments.type';
-import { PaginationType } from './types/pagination.type';
+import { AuthService } from '../../auth/auth.service';
+import { ProfilesService } from '../../profiles/profiles.service';
+import { ArticleEntity } from '../entities/article.entity';
+import { UserEntity } from '../../auth/entities/user.entity';
+import { Articles } from '../types/articles.type';
+import { CreateArticleType } from '../types/create-article.type';
+import { UpdateArticleType } from '../types/update-article.type';
+import { Article, ArticleElement } from '../types/article.type';
+import { ProfileElement } from '../../profiles/types/profile.type';
+import { PaginationType } from '../types/pagination.type';
 
 @Injectable()
 export class ArticlesService {
     constructor(
         @InjectRepository(ArticleEntity)
         private readonly articleRepository: Repository<ArticleEntity>,
-        @InjectRepository(CommentEntity)
-        private readonly commentRepository: Repository<CommentEntity>,
         private readonly datasource: DataSource,
         private readonly authService: AuthService,
         private readonly profileService: ProfilesService
@@ -176,97 +170,8 @@ export class ArticlesService {
             throw new UnprocessableEntityException(`${error.message}`)
         }
     }
-    async createArticleFavorite(user: UserEntity, slug: string): Promise<Article> {
-        let article: ArticleEntity = await this.getArticleBySlugWithUser(slug);
 
-        !article.users.find(user => user) ?
-            article.favoritesCount += 1 :
-            null;
-        article.users = [...article.users, user];
-        article.favorited = true;
 
-        await this.articleRepository.save(article);
-        delete article.users;
-        return await this.getBuildArticle(user.username, article)
-    }
-    async deleteArticleFavorite(user: UserEntity, slug: string): Promise<Article> {
-        let article: ArticleEntity;
-        try {
-            article = await this.articleRepository.findOne({ where: { slug }, relations: ['users'] })
-
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-        if (!article) throw new NotFoundException(`Article with #slug: ${slug} not found`);
-
-        article.users.find(user => user) ?
-            article.favoritesCount -= 1 :
-            null;
-        article.users = article.users.filter(thisUser => thisUser.username !== user.username);
-        if (article.users.length === 0) article.favorited = false;
-
-        await this.articleRepository.save(article);
-        delete article.users;
-        return await this.getBuildArticle(user.username, article)
-    }
-    async createArticleComments(user: UserEntity, slug: string, createComment: CreateCommentType)
-        : Promise<Comment> {
-        let article: ArticleEntity = await this.getArticleBySlugWithComment(slug);
-        let comment: CommentEntity;
-        try {
-            comment = this.commentRepository.create({
-                body: createComment.comment.body,
-                author: user,
-                article
-            })
-            comment = await this.commentRepository.save(comment);
-            return await this.getBuildComment(user.username, comment)
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-    }
-    async getArticleComments(username: string, slug: string): Promise<Comments> {
-        let article: ArticleEntity = await this.getArticleBySlugWithComment(slug);
-
-        try {
-            const queryBuilder =
-                this.datasource.getRepository(CommentEntity)
-                    .createQueryBuilder('comments')
-                    .leftJoinAndSelect('comments.author', 'author')
-                    .leftJoinAndSelect('comments.article', 'article')
-
-            queryBuilder.andWhere('article.id = :id', { id: article.id });
-            const comments: CommentElement[] = await Promise.all(
-                await queryBuilder.getMany()
-                    .then(comments =>
-                        comments.map(async comment =>
-                            await this.getBuildComment(username, comment)
-                                .then(comment => comment.comment)))
-            )
-            return {
-                comments
-            }
-
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-    }
-    async deleteArticleComment(user: UserEntity, slug: string, id: number): Promise<void> {
-        let article: ArticleEntity = await this.getArticleBySlugWithComment(slug);
-        let comment: CommentEntity;
-        try {
-            comment =
-                await this.commentRepository.findOne({ where: { id }, relations: ['author', 'article'] })
-
-        } catch (error) {
-            throw new UnprocessableEntityException(`${error.message}`)
-        }
-        if (!comment) throw new NotFoundException(`comment with #id: ${id} not found`);
-        if (comment.author.id !== user.id) throw new UnauthorizedException('you can\'t delete this comment');
-        if (comment.article.id !== article.id) throw new UnauthorizedException('comment not belong to this article');
-        await this.commentRepository.remove(comment);
-        return;
-    }
 
 
 
@@ -292,16 +197,7 @@ export class ArticlesService {
             articles: modifiedArticles
         }
     }
-    async getBuildComment(currentUsername: string, comment: CommentEntity): Promise<Comment> {
-        delete comment.article;
-        const { profile } = await this.profileService.getProfile(currentUsername, comment.author);
-        return {
-            comment: {
-                ...comment,
-                author: profile
-            }
-        }
-    }
+
     private getSlug(title: string): string {
         return slugify(title, {
             lower: true
