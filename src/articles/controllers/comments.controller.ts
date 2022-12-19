@@ -1,4 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, UseGuards } from "@nestjs/common";
+import {
+    Body, Controller,
+    Delete, Get, Param, ParseIntPipe, Post, UseGuards,
+    Logger
+} from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -13,6 +17,7 @@ import { CommentsService } from "../services/comments.service";
 @ApiTags('Comments')
 @Controller('articles')
 export class CommentsController {
+    logger = new Logger('CommentsController')
     constructor(private readonly commentsService: CommentsService) { }
 
     @ApiOperation({ summary: 'Get comments for an article' })
@@ -41,6 +46,7 @@ export class CommentsController {
         @GetUser('username') username: string,
         @Param('slug') slug: string
     ): Promise<Comments> {
+        this.logger.verbose(`getting comments of article with #slug: ${slug}`)
         return this.commentsService.getArticleComments(username, slug);
     }
 
@@ -70,6 +76,7 @@ export class CommentsController {
         @Param('slug') slug: string,
         @Body() createCommentDto: CreateCommentDto
     ): Promise<Comment> {
+        this.logger.verbose(`User with #id: ${user.id} creating comment for article with #slug: ${slug} with #CreateCommentDto: ${JSON.stringify(createCommentDto)}`)
         return this.commentsService.createArticleComments(user, slug, createCommentDto);
     }
 
@@ -81,6 +88,7 @@ export class CommentsController {
         @Param('slug') slug: string,
         @Param('id', ParseIntPipe) id: number
     ): Promise<void> {
+        this.logger.verbose(`user with #id: ${user.id} deleting comments of article with #slug: ${slug} with #id: ${id}`)
         return this.commentsService.deleteArticleComment(user, slug, id);
     }
 }

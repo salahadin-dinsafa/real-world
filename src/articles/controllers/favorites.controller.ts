@@ -1,4 +1,4 @@
-import { Controller, Delete, Param, Post, UseGuards } from "@nestjs/common";
+import { Controller, Delete, Param, Post, UseGuards, Logger } from "@nestjs/common";
 
 import { AuthGuard } from "@nestjs/passport";
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -11,6 +11,7 @@ import { FavoritesService } from "../services/favorites.service";
 @ApiTags('Favorites')
 @Controller('articles')
 export class FavoritesController {
+    logger = new Logger('FavoritesController')
     constructor(private readonly favoritesService: FavoritesService) { }
 
     @ApiOperation({ summary: 'Favorite an article' })
@@ -43,6 +44,7 @@ export class FavoritesController {
         @GetUser() user: UserEntity,
         @Param('slug') slug: string
     ): Promise<Article> {
+        this.logger.verbose(`user with #id: ${user.id} favoriting article with #slug: ${slug}`)
         return this.favoritesService.createArticleFavorite(user, slug);
     }
 
@@ -76,6 +78,7 @@ export class FavoritesController {
         @GetUser() user: UserEntity,
         @Param('slug') slug: string
     ): Promise<Article> {
+        this.logger.verbose(`user with #id: ${user.id} unfavoriting article with #slug: ${slug}`)
         return this.favoritesService.deleteArticleFavorite(user, slug);
     }
 }

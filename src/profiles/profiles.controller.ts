@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger/dist';
 
@@ -9,6 +9,7 @@ import { Profile } from './types/profile.type';
 @ApiTags('Profile')
 @Controller('profiles')
 export class ProfilesController {
+    logger = new Logger('ProfilesController')
     constructor(private readonly profilesService: ProfilesService) { }
 
     @ApiOperation({ summary: 'Get a profile', description: 'Get a profile of a user of the system. Auth optional' })
@@ -28,6 +29,7 @@ export class ProfilesController {
     getProfileByUsername(
         @GetUser('username') currentUsername: string,
         @Param('username') username: string): Promise<Profile> {
+        this.logger.verbose(`getting profile of user with #username: ${username}`)
         return this.profilesService.getProfileByUsername(currentUsername, username);
     }
 
@@ -50,6 +52,7 @@ export class ProfilesController {
         @GetUser('username') currentUsername: string,
         @Param('username') username: string,
     ): Promise<Profile> {
+        this.logger.verbose(`user with #username: ${currentUsername}  following user with #username: ${username}`)
         return this.profilesService.followUserByUsername(currentUsername, username);
     }
 
@@ -72,6 +75,7 @@ export class ProfilesController {
         @GetUser('username') currentUsername: string,
         @Param('username') username: string,
     ): Promise<Profile> {
+        this.logger.verbose(`user with #username: ${currentUsername}  unfollowing user with #username: ${username}`)
         return this.profilesService.unFollowUserByUsername(currentUsername, username);
     }
 

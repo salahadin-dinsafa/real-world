@@ -1,4 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+    Body, Controller,
+    Delete, Get, Param, Post, Put, Query, UseGuards,
+    Logger
+} from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger/dist';
@@ -16,6 +20,8 @@ import { Article } from '../types/article.type';
 @ApiTags('Articles')
 @Controller('articles')
 export class ArticlesController {
+    logger = new Logger('ArticlesController');
+
     constructor(private readonly articlesService: ArticlesService) { }
 
     @ApiOperation({ summary: 'Get recent articles from users you follow', description: 'Get most recent articles from users you follow. Use query parameter' })
@@ -47,6 +53,7 @@ export class ArticlesController {
     getArticlesFeed(
         @GetUser() user: UserEntity,
         @Query() feedPaginationDto: FeedPaginationDto): Promise<Articles> {
+        this.logger.verbose(`User with #id: ${user.id} getting article feed with #FeedPaginationDto: ${JSON.stringify(feedPaginationDto)}`)
         return this.articlesService.getArticlesFeed(user, feedPaginationDto)
     }
 
@@ -79,6 +86,7 @@ export class ArticlesController {
         @GetUser() user: UserEntity,
         @Query() paginationDto: PaginationDto):
         Promise<Articles> {
+        this.logger.verbose(`getting articles with #PaginationDto: ${JSON.stringify(paginationDto)}`)
         return this.articlesService.getArticles(user, paginationDto);
     }
 
@@ -111,6 +119,7 @@ export class ArticlesController {
     createArticle(
         @GetUser() user: UserEntity,
         @Body() createArticleDto: CreateArticleDto): Promise<Article> {
+        this.logger.verbose(`User with #id: ${user.id} creating article with #CreateArticleDto: ${JSON.stringify(createArticleDto)}`)
         return this.articlesService.createArticle(user, createArticleDto);
     }
 
@@ -142,6 +151,7 @@ export class ArticlesController {
     getArticle(
         @GetUser('username') username: string,
         @Param('slug') slug: string): Promise<Article> {
+        this.logger.verbose(`getting a single article with #slug: ${slug}`)
         return this.articlesService.getArticle(username, slug)
     }
 
@@ -176,6 +186,7 @@ export class ArticlesController {
         @Param('slug') slug: string,
         @Body() updateArticleDto: UpdateArticleDto
     ): Promise<Article> {
+        this.logger.verbose(`User with #username: ${username} updating article with #UpdateArticleDto: ${JSON.stringify(updateArticleDto)}`)
         return this.articlesService.updateArticle(username, slug, updateArticleDto)
     }
 
@@ -186,6 +197,7 @@ export class ArticlesController {
         @GetUser() user: UserEntity,
         @Param('slug') slug: string
     ): Promise<void> {
+        this.logger.verbose(`User with #id: ${user.id} removing article with slug: ${slug}`)
         return this.articlesService.deleteArticle(user, slug);
     }
 

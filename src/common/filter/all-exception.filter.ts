@@ -3,6 +3,7 @@ import { ExceptionFilter, ArgumentsHost } from "@nestjs/common/interfaces";
 import { Catch } from "@nestjs/common/decorators/core/catch.decorator";
 import { HttpStatus } from "@nestjs/common/enums";
 import { Request, Response } from "express";
+import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 
 import {
@@ -10,10 +11,10 @@ import {
   HttpExceptionResponse,
   RealWorldHttpExceptionResponse
 } from "../types/http-exception-response.interface";
-import { ExpressRequest } from "../types/express-request.type";
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
+  logger = new Logger('Exception Handler');
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -45,6 +46,8 @@ export class AllExceptionFilter implements ExceptionFilter {
         path: request.url, statusCode: status, timeStamp: new Date().toISOString()
       }, request, exception);
     this._writeErrorLogToFile(errorLog);
+    this.logger.error(`Error: ${errorMessage}`)
+
     response.status(status).json(errorResponse);
   }
 

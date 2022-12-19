@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, UseGuards, Logger } from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -14,6 +14,7 @@ import { User } from './types/user.type';
 @ApiTags('User and Authentication')
 @Controller()
 export class AuthController {
+    logger = new Logger('AuthContrller')
     constructor(private readonly authService: AuthService) { }
 
     @ApiOperation({ summary: 'Existing user login', description: 'Login for existing user' })
@@ -32,6 +33,7 @@ export class AuthController {
     })
     @Post('/users/login')
     login(@Body() loginDto: LoginDto): Promise<User> {
+        this.logger.verbose(`Loging with #LoginDto: ${JSON.stringify(loginDto)}`);
         return this.authService.login(loginDto);
     }
 
@@ -51,6 +53,7 @@ export class AuthController {
     })
     @Post('/users')
     createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
+        this.logger.verbose(`Registering with #CreateUserDto: ${JSON.stringify(createUserDto)}`);
         return this.authService.createUser(createUserDto);
     }
 
@@ -71,6 +74,7 @@ export class AuthController {
     @UseGuards(AuthGuard())
     @Get('/user')
     getCurrentUser(@GetUser() user: UserEntity): Promise<User> {
+        this.logger.verbose(`Geting current logged`);
         return this.authService.getCurrentUser(user);
     }
 
@@ -94,6 +98,7 @@ export class AuthController {
         @GetUser() user: UserEntity,
         @Body() updateUserDto: UpdateUserDto
     ): Promise<User> {
+        this.logger.verbose(`Updating current logged user with #UpdateUserDto: ${JSON.stringify(updateUserDto)}`);
         return this.authService.updateCurrentUser(user, updateUserDto);
     }
 
