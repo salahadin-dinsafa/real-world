@@ -29,6 +29,8 @@ export class TagsService {
         try {
             return await this.tagRepository.save(createTag);
         } catch (error) {
+            if (error.code === '23505')
+                throw new UnprocessableEntityException(`Tag with #name: ${createTag.name}`)
             throw new UnprocessableEntityException(`${error.message}`)
         }
     }

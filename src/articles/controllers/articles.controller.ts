@@ -149,10 +149,10 @@ export class ArticlesController {
     })
     @Get(':slug')
     getArticle(
-        @GetUser('username') username: string,
+        @GetUser() user: UserEntity,
         @Param('slug') slug: string): Promise<Article> {
-        this.logger.verbose(`getting a single article with #slug: ${slug}`)
-        return this.articlesService.getArticle(username, slug)
+        this.logger.verbose(`getting a single article with #slug: ${slug}`);
+        return this.articlesService.getArticle(user, slug)
     }
 
     @ApiOperation({ summary: 'Update an article', description: 'Update an article. Auth is required' })

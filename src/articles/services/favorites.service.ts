@@ -16,20 +16,20 @@ export class FavoritesService {
         private readonly articleService: ArticlesService
     ) { }
 
-    async createArticleFavorite(user: UserEntity, slug: string): Promise<Article> {
+    async createArticleFavorite(currentUser: UserEntity, slug: string): Promise<Article> {
         let article: ArticleEntity = await this.articleService.getArticleBySlugWithUser(slug);
 
-        !article.users.find(user => user) ?
-            article.favoritesCount += 1 :
-            null;
-        article.users = [...article.users, user];
+        article.users.find(user => user.id === currentUser.id) ?
+            article.favoritesCount = article.favoritesCount :
+            article.favoritesCount = article.favoritesCount + 1;
+        article.users = [...article.users, currentUser];
         article.favorited = true;
 
         await this.articleRepository.save(article);
         delete article.users;
-        return await this.articleService.getBuildArticle(user.username, article)
+        return await this.articleService.getBuildArticle(currentUser.username, article)
     }
-    async deleteArticleFavorite(user: UserEntity, slug: string): Promise<Article> {
+    async deleteArticleFavorite(currentUser: UserEntity, slug: string): Promise<Article> {
         let article: ArticleEntity;
         try {
             article = await this.articleRepository.findOne({ where: { slug }, relations: ['users'] })
@@ -39,14 +39,14 @@ export class FavoritesService {
         }
         if (!article) throw new NotFoundException(`Article with #slug: ${slug} not found`);
 
-        article.users.find(user => user) ?
-            article.favoritesCount -= 1 :
-            null;
-        article.users = article.users.filter(thisUser => thisUser.username !== user.username);
+        article.users.find(user => user.id === currentUser.id) ?
+            article.favoritesCount = article.favoritesCount - 1 :
+            article.favoritesCount = article.favoritesCount;
+        article.users = article.users.filter(thisUser => thisUser.username !== currentUser.username);
         if (article.users.length === 0) article.favorited = false;
 
         await this.articleRepository.save(article);
         delete article.users;
-        return await this.articleService.getBuildArticle(user.username, article)
+        return await this.articleService.getBuildArticle(currentUser.username, article)
     }
 }

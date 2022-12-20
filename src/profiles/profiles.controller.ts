@@ -2,6 +2,7 @@ import { Controller, Delete, Get, Param, Post, UseGuards, Logger } from '@nestjs
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger/dist';
 
+import { UserEntity } from '../auth/entities/user.entity';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { ProfilesService } from './profiles.service';
 import { Profile } from './types/profile.type';
@@ -27,10 +28,10 @@ export class ProfilesController {
     })
     @Get(':username')
     getProfileByUsername(
-        @GetUser('username') currentUsername: string,
+        @GetUser() user: UserEntity,
         @Param('username') username: string): Promise<Profile> {
         this.logger.verbose(`getting profile of user with #username: ${username}`)
-        return this.profilesService.getProfileByUsername(currentUsername, username);
+        return this.profilesService.getProfileByUsername(user, username);
     }
 
     @ApiOperation({ summary: 'Follow a user', description: 'Follow a user by usrename' })

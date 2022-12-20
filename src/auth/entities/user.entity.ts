@@ -10,7 +10,7 @@ import {
 import { ArticleEntity } from "../../articles/entities/article.entity";
 import { CommentEntity } from "../../articles/entities/comment.entity";
 
-@Entity({ name: "realworld-users" })
+@Entity({ name: "users" })
 export class UserEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;

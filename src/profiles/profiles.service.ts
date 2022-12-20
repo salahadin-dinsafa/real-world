@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm/repository/Repository';
@@ -15,8 +15,10 @@ export class ProfilesService {
         private readonly userRepository: Repository<UserEntity>
     ) { }
 
-    async getProfileByUsername(currentUsername: string, username: string): Promise<Profile> {
+    async getProfileByUsername(currentUser: UserEntity, username: string): Promise<Profile> {
         let user: UserEntity = await this.authService.getUserByUsernameWithRelationFollower(username);
+        let currentUsername: string;
+        currentUser ? currentUsername = currentUser.username : currentUsername = '';
         return await this.getProfile(currentUsername, user);
     }
 

@@ -62,7 +62,8 @@ export class ArticlesService {
 
     async getArticles(currentUser: UserEntity, pagination: PaginationType): Promise<Articles> {
         const { tag, author, limit, offset, favorited } = pagination;
-
+        let username: string;
+        currentUser ? username = currentUser.username : username = '';
         if (author) await this.authService.getUserByUsername(author);
         try {
             const queryBuilder =
@@ -87,7 +88,7 @@ export class ArticlesService {
             limit ? queryBuilder.take(limit) : queryBuilder.take(10);
             offset ? queryBuilder.skip(offset) : queryBuilder.skip(0);
 
-            const builtArticles: Articles = await this.getBuildArticles(currentUser.username, await queryBuilder.getMany());
+            const builtArticles: Articles = await this.getBuildArticles(username, await queryBuilder.getMany());
 
             return builtArticles;
         } catch (error) {
@@ -132,9 +133,11 @@ export class ArticlesService {
             throw new UnprocessableEntityException(`${error.message}`)
         }
     }
-    async getArticle(currentUsername: string, slug: string): Promise<Article> {
+    async getArticle(currentUser: UserEntity, slug: string): Promise<Article> {
         let article: ArticleEntity = await this.getArticleBySlug(slug);
-        return await this.getBuildArticle(currentUsername, article);
+        let username: string;
+        currentUser ? username = currentUser.username : username = '';
+        return await this.getBuildArticle(username, article);
     }
     async updateArticle(currentusername: string, slug: string, updateArticle: UpdateArticleType)
         : Promise<Article> {
